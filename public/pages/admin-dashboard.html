@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Exam Attendance System</title>
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-row">
+          <img src="/img/logo-icon.png" alt="EAS Logo">
+          <h2>Exam Attendance</h2>
+        </div>
+        <p class="user-role">Admin Panel</p>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" onclick="showSection('dashboard')"><span class="nav-icon">&#128202;</span> Dashboard</a></li>
+        <li><a href="#" onclick="showSection('students')"><span class="nav-icon">&#127891;</span> Students</a></li>
+        <li><a href="#" onclick="showSection('teachers')"><span class="nav-icon">&#128100;</span> Teachers</a></li>
+        <li><a href="#" onclick="showSection('courses')"><span class="nav-icon">&#128218;</span> Courses</a></li>
+        <li><a href="#" onclick="showSection('departments')"><span class="nav-icon">&#127970;</span> Departments</a></li>
+        <li><a href="#" onclick="showSection('exams')"><span class="nav-icon">&#128221;</span> Exams</a></li>
+        <li><a href="#" onclick="showSection('reports')"><span class="nav-icon">&#128200;</span> Reports</a></li>
+        <li><a href="#" onclick="logout()"><span class="nav-icon">&#128682;</span> Sign Out</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div id="alert" class="alert"></div>
+
+      <!-- Dashboard Section -->
+      <section id="sec-dashboard">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <span id="welcome-text" style="font-size:14px;color:var(--text-light);"></span>
+        </div>
+        <div class="stats-grid" id="statsGrid">
+          <div class="spinner"></div>
+        </div>
+      </section>
+
+      <!-- Students Section -->
+      <section id="sec-students" class="hidden">
+        <div class="page-header">
+          <h1>Student Management</h1>
+          <button class="btn btn-primary btn-sm" onclick="openModal('userModal'); prepareUserForm('student')">+ Add Student</button>
+        </div>
+        <div class="year-tabs" id="studentYearTabs">
+          <button class="year-tab active" data-level="all" onclick="filterStudentsByYear('all', this)">All Years</button>
+          <button class="year-tab" data-level="100" onclick="filterStudentsByYear('100', this)">Year 1</button>
+          <button class="year-tab" data-level="200" onclick="filterStudentsByYear('200', this)">Year 2</button>
+          <button class="year-tab" data-level="300" onclick="filterStudentsByYear('300', this)">Year 3</button>
+          <button class="year-tab" data-level="400" onclick="filterStudentsByYear('400', this)">Year 4</button>        
+        </div>
+        <div id="studentDeptTabs" class="dept-tabs"></div>
+        <div id="studentsByYear"><div class="spinner"></div></div>
+      </section>
+
+      <!-- Teachers Section -->
+      <section id="sec-teachers" class="hidden">
+        <div class="page-header">
+          <h1>Teacher Management</h1>
+          <button class="btn btn-primary btn-sm" onclick="openModal('userModal'); prepareUserForm('teacher')">+ Add Teacher</button>
+        </div>
+        <div class="dept-tabs" id="teacherDeptTabs" style="margin-left:0;padding-left:0;border-left:none;"></div>
+        <div class="card">
+          <div class="card-body table-responsive">
+            <table><thead><tr>
+              <th>Name</th><th>Staff ID</th><th>Department</th><th>Email</th><th>Actions</th>
+            </tr></thead><tbody id="teachersTable"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Courses Section -->
+      <section id="sec-courses" class="hidden">
+        <div class="page-header">
+          <h1>Course Management</h1>
+          <button class="btn btn-primary btn-sm" onclick="openModal('courseModal')">+ Add Course</button>
+        </div>
+        <div class="year-tabs" id="courseYearTabs">
+          <button class="year-tab active" data-level="all" onclick="filterCoursesByYear('all', this)">All Years</button>
+          <button class="year-tab" data-level="100" onclick="filterCoursesByYear('100', this)">Year 1</button>
+          <button class="year-tab" data-level="200" onclick="filterCoursesByYear('200', this)">Year 2</button>
+          <button class="year-tab" data-level="300" onclick="filterCoursesByYear('300', this)">Year 3</button>
+          <button class="year-tab" data-level="400" onclick="filterCoursesByYear('400', this)">Year 4</button>
+          <button class="year-tab" data-level="500" onclick="filterCoursesByYear('500', this)">Year 5</button>
+        </div>
+        <div id="courseDeptTabs" class="dept-tabs"></div>
+        <div id="coursesByYear"><div class="spinner"></div></div>
+      </section>
+
+      <!-- Departments Section -->
+      <section id="sec-departments" class="hidden">
+        <div class="page-header">
+          <h1>Department Management</h1>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Add Department</h3></div>
+          <div class="card-body">
+            <form id="departmentForm" class="d-flex gap-1" style="align-items:flex-end;flex-wrap:wrap;">
+              <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;"><label>Department Name</label><input type="text" id="deptName" placeholder="e.g. Computer Science" required></div>
+              <div class="form-group" style="width:120px;margin-bottom:0;"><label>Code (optional)</label><input type="text" id="deptCode" placeholder="e.g. CSC"></div>
+              <button type="submit" class="btn btn-primary btn-sm" style="width:auto;padding:11px 20px;">+ Add</button>
+            </form>
+          </div>
+        </div>
+        <div class="card mt-2">
+          <div class="card-header"><h3>All Departments</h3></div>
+          <div class="card-body table-responsive">
+            <table><thead><tr><th>Name</th><th>Code</th><th>Actions</th></tr></thead>
+              <tbody id="departmentsTable"><tr><td colspan="3"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Exams Section -->
+      <section id="sec-exams" class="hidden">
+        <div class="page-header">
+          <h1>Exam Management</h1>
+          <button class="btn btn-primary btn-sm" onclick="openExamModal()">+ Schedule Exam</button>
+        </div>
+        <div class="year-tabs" id="examYearTabs">
+          <button class="year-tab active" data-level="all" onclick="filterExamsByYear('all', this)">All Years</button>
+          <button class="year-tab" data-level="100" onclick="filterExamsByYear('100', this)">Year 1</button>
+          <button class="year-tab" data-level="200" onclick="filterExamsByYear('200', this)">Year 2</button>
+          <button class="year-tab" data-level="300" onclick="filterExamsByYear('300', this)">Year 3</button>
+          <button class="year-tab" data-level="400" onclick="filterExamsByYear('400', this)">Year 4</button>
+          <button class="year-tab" data-level="500" onclick="filterExamsByYear('500', this)">Year 5</button>
+        </div>
+        <div id="examDeptTabs" class="dept-tabs"></div>
+        <div id="examsByYear"><div class="spinner"></div></div>
+      </section>
+
+      <!-- Reports Section -->
+      <section id="sec-reports" class="hidden">
+        <div class="page-header"><h1>Attendance Reports</h1></div>
+        <div class="card">
+          <div class="card-header">
+            <h3>Select an exam to view report</h3>
+          </div>
+          <div class="card-body">
+            <select id="reportExamSelect" class="form-group" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;" onchange="loadReport(this.value)">
+              <option value="">-- Select Exam --</option>
+            </select>
+            <div id="reportContent" class="mt-2"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- User Modal (Add Student / Teacher) -->
+  <div class="modal-overlay" id="userModal">
+    <div class="modal">
+      <h2 id="userModalTitle">Add Student</h2>
+      <form id="userForm">
+        <input type="hidden" id="userId">
+        <input type="hidden" id="userRole" value="student">
+        <div class="form-group"><label>Full Name</label><input type="text" id="userFullName" required></div>
+        <div class="form-group"><label>Email</label><input type="email" id="userEmail" required></div>
+        <div class="form-group"><label>Password</label><input type="password" id="userPassword" placeholder="Min 6 characters"></div>
+        <div class="form-group" id="matricField"><label>Matric Number</label><input type="text" id="userMatric"></div>
+        <div class="form-group" id="staffIdField" class="hidden"><label>Staff ID</label><input type="text" id="userStaffId"></div>
+        <div class="form-group"><label>Department</label><select id="userDept" required><option value="">-- Select Department --</option></select></div>
+        <div class="form-group" id="levelField"><label>Level</label>
+          <select id="userLevel"><option value="100">100</option><option value="200">200</option><option value="300">300</option><option value="400" selected>400</option><option value="500">500</option></select>
+        </div>
+        <div class="form-group"><label>Phone</label><input type="text" id="userPhone"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('userModal')">Cancel</button>
+          <button type="submit" class="btn btn-success btn-sm">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Course Modal -->
+  <div class="modal-overlay" id="courseModal">
+    <div class="modal">
+      <h2>Add Course</h2>
+      <form id="courseForm">
+        <input type="hidden" id="courseId">
+        <div class="form-group"><label>Course Code</label><input type="text" id="courseCode" placeholder="e.g. CSC401" required></div>
+        <div class="form-group"><label>Course Title</label><input type="text" id="courseTitle" required></div>
+        <div class="form-group"><label>Department</label><select id="courseDept" required><option value="">-- Select Department --</option></select></div>
+        <div class="form-group"><label>Level</label>
+          <select id="courseLevel"><option value="100">100</option><option value="200">200</option><option value="300">300</option><option value="400" selected>400</option><option value="500">500</option></select>
+        </div>
+        <div class="form-group"><label>Teacher</label><select id="courseTeacher"><option value="">-- Select --</option></select></div>
+        <div class="form-group"><label>Credit Units</label><input type="number" id="courseCreditUnits" value="3" min="1" max="6"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('courseModal')">Cancel</button>
+          <button type="submit" class="btn btn-success btn-sm">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Exam Modal -->
+  <div class="modal-overlay" id="examModal">
+    <div class="modal">
+      <h2>Schedule Exam</h2>
+      <form id="examForm">
+        <input type="hidden" id="examId">
+        <div class="form-group"><label>Course</label><select id="examCourse" required><option value="">-- Select --</option></select></div>
+        <div class="form-group"><label>Exam Date</label><input type="date" id="examDate" required></div>
+        <div class="d-flex gap-1">
+          <div class="form-group" style="flex:1"><label>Start Time</label><input type="time" id="examStart" required></div>
+          <div class="form-group" style="flex:1"><label>End Time</label><input type="time" id="examEnd" required></div>
+        </div>
+        <div class="form-group"><label>Venue</label><input type="text" id="examVenue" required></div>
+        <div class="form-group"><label>Invigilator</label><select id="examInvigilator"><option value="">-- Select --</option></select></div>
+        <div class="d-flex gap-1">
+          <div class="form-group" style="flex:1"><label>Semester</label>
+            <select id="examSemester"><option value="First">First</option><option value="Second" selected>Second</option></select>
+          </div>
+          <div class="form-group" style="flex:1"><label>Academic Year</label><input type="text" id="examYear" value="2025/2026"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('examModal')">Cancel</button>
+          <button type="submit" class="btn btn-success btn-sm">Schedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    if (!requireAuth('admin')) throw new Error('Unauthorized');
+
+    const user = getUser();
+    document.getElementById('welcome-text').textContent = `Welcome, ${user.fullName}`;
+
+    // ===== NAVIGATION =====
+    function showSection(section) {
+      document.querySelectorAll('[id^="sec-"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`sec-${section}`).classList.remove('hidden');
+      document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+      event.target.closest('a').classList.add('active');
+      if (section === 'students') loadStudents();
+      if (section === 'teachers') loadTeachers();
+      if (section === 'courses') loadCourses();
+      if (section === 'departments') loadDepartments();
+      if (section === 'exams') loadExams();
+      if (section === 'reports') loadExamOptions();
+      document.querySelector('.sidebar').classList.remove('open');
+    }
+
+    // ===== DASHBOARD =====
+    async function loadDashboard() {
+      try {
+        const data = await apiRequest('/admin/dashboard');
+        document.getElementById('statsGrid').innerHTML = `
+          <div class="stat-card blue"><div class="stat-icon">&#127891;</div><div><div class="stat-number">${data.totalStudents}</div><div class="stat-label">Total Students</div></div></div>
+          <div class="stat-card green"><div class="stat-icon">&#128100;</div><div><div class="stat-number">${data.totalTeachers}</div><div class="stat-label">Total Teachers</div></div></div>
+          <div class="stat-card"><div class="stat-icon">&#128218;</div><div><div class="stat-number">${data.totalCourses}</div><div class="stat-label">Total Courses</div></div></div>
+          <div class="stat-card yellow"><div class="stat-icon">&#128221;</div><div><div class="stat-number">${data.totalExams}</div><div class="stat-label">Total Exams</div></div></div>
+          <div class="stat-card blue"><div class="stat-icon">&#128197;</div><div><div class="stat-number">${data.scheduledExams}</div><div class="stat-label">Scheduled Exams</div></div></div>
+          <div class="stat-card green"><div class="stat-icon">&#9989;</div><div><div class="stat-number">${data.completedExams}</div><div class="stat-label">Completed Exams</div></div></div>
+          <div class="stat-card"><div class="stat-icon">&#128202;</div><div><div class="stat-number">${data.totalAttendance}</div><div class="stat-label">Attendance Records</div></div></div>
+          <div class="stat-card red"><div class="stat-icon">&#9888;</div><div><div class="stat-number">${data.flaggedAttendance}</div><div class="stat-label">Flagged Records</div></div></div>
+        `;
+      } catch (e) { console.error(e); }
+    }
+
+    // ===== DEPARTMENTS (shared list used across forms + filters) =====
+    let allDepartments = [];
+
+    async function loadDepartmentList() {
+      try {
+        const data = await apiRequest('/admin/departments');
+        allDepartments = data.departments;
+        const opts = '<option value="">-- Select Department --</option>' +
+          allDepartments.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+        document.getElementById('userDept').innerHTML = opts;
+        document.getElementById('courseDept').innerHTML = opts;
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadDepartments() {
+      await loadDepartmentList();
+      const tbody = document.getElementById('departmentsTable');
+      if (!allDepartments.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center">No departments yet. Add one above.</td></tr>'; return; }
+      tbody.innerHTML = allDepartments.map(d => `<tr>
+        <td>${d.name}</td><td>${d.code || '-'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteDepartment('${d._id}')">Delete</button></td>
+      </tr>`).join('');
+    }
+
+    document.getElementById('departmentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await apiRequest('/admin/departments', 'POST', {
+          name: document.getElementById('deptName').value,
+          code: document.getElementById('deptCode').value
+        });
+        document.getElementById('departmentForm').reset();
+        showAlert('alert', 'Department added!', 'success');
+        loadDepartments();
+      } catch (err) { showAlert('alert', err.message); }
+    });
+
+    async function deleteDepartment(id) {
+      if (!confirm('Delete this department?')) return;
+      try {
+        await apiRequest(`/admin/departments/${id}`, 'DELETE');
+        loadDepartments();
+      } catch (e) { showAlert('alert', e.message); }
+    }
+
+    // Builds the dept-tabs row for a given container, scoped to `items` (already year-filtered),
+    // and re-renders via `onSelect(deptValue)` whenever a tab is clicked.
+    function buildDeptTabs(containerId, items, onSelect) {
+      const container = document.getElementById(containerId);
+      const depts = [...new Set(items.map(i => i.department).filter(Boolean))].sort();
+      if (depts.length <= 1) { container.innerHTML = ''; return; }
+      container.innerHTML = `<button class="dept-tab active" data-dept="all">All Departments</button>` +
+        depts.map(d => `<button class="dept-tab" data-dept="${d}">${d}</button>`).join('');
+      container.querySelectorAll('.dept-tab').forEach(btn => {
+        btn.onclick = () => {
+          container.querySelectorAll('.dept-tab').forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+          onSelect(btn.dataset.dept);
+        };
+      });
+    }
+
+    // ===== STUDENTS =====
+    let allStudents = [];
+    let studentYear = 'all', studentDept = 'all';
+    const levelLabels = { '100': 'Year 1', '200': 'Year 2', '300': 'Year 3', '400': 'Year 4', '500': 'Year 5' };
+
+    async function loadStudents() {
+      try {
+        const data = await apiRequest('/admin/users?role=student');
+        allStudents = data.users;
+        studentYear = 'all'; studentDept = 'all';
+        renderStudentsByYear();
+      } catch (e) { console.error(e); }
+    }
+
+    function filterStudentsByYear(level, btn) {
+      document.querySelectorAll('#studentYearTabs .year-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      studentYear = level; studentDept = 'all';
+      renderStudentsByYear();
+    }
+
+    function renderStudentsByYear() {
+      const yearScoped = studentYear === 'all' ? allStudents : allStudents.filter(s => s.level === studentYear);
+      buildDeptTabs('studentDeptTabs', yearScoped, (dept) => { studentDept = dept; renderStudentsTable(); });
+      renderStudentsTable();
+    }
+
+    function renderStudentsTable() {
+      const container = document.getElementById('studentsByYear');
+      if (!allStudents.length) { container.innerHTML = '<div class="card"><div class="card-body text-center" style="color:var(--text-light)">No students found</div></div>'; return; }
+
+      const levels = studentYear === 'all' ? ['100','200','300','400','500'] : [studentYear];
+      let html = '';
+      levels.forEach(lvl => {
+        let students = allStudents.filter(s => s.level === lvl);
+        if (studentDept !== 'all') students = students.filter(s => s.department === studentDept);
+        if (!students.length) return;
+        html += `<div class="card mt-2">
+          <div class="card-header"><h3>${levelLabels[lvl] || lvl} <span style="color:var(--text-light);font-weight:400;font-size:13px">(Level ${lvl})</span></h3></div>
+          <div class="card-body table-responsive">
+            <table><thead><tr>
+              <th>Name</th><th>Matric No.</th><th>Department</th><th>Email</th><th>Actions</th>
+            </tr></thead><tbody>
+              ${students.map(u => `<tr>
+                <td>${u.fullName}</td><td>${u.matricNumber || '-'}</td><td>${u.department || '-'}</td><td>${u.email}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}','student')">Delete</button></td>
+              </tr>`).join('')}
+            </tbody></table>
+          </div>
+        </div>`;
+      });
+
+      container.innerHTML = html || '<div class="card"><div class="card-body text-center" style="color:var(--text-light)">No students found for this filter.</div></div>';
+    }
+
+    // ===== TEACHERS =====
+    let allTeachers = [];
+    let teacherDept = 'all';
+
+    async function loadTeachers() {
+      try {
+        const data = await apiRequest('/admin/users?role=teacher');
+        allTeachers = data.users;
+        teacherDept = 'all';
+        buildDeptTabs('teacherDeptTabs', allTeachers, (dept) => { teacherDept = dept; renderTeachersTable(); });
+        renderTeachersTable();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderTeachersTable() {
+      const tbody = document.getElementById('teachersTable');
+      let teachers = allTeachers;
+      if (teacherDept !== 'all') teachers = teachers.filter(t => t.department === teacherDept);
+      if (!teachers.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center">No teachers found</td></tr>'; return; }
+      tbody.innerHTML = teachers.map(u => `<tr>
+        <td>${u.fullName}</td><td>${u.staffId || '-'}</td><td>${u.department || '-'}</td><td>${u.email}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}','teacher')">Delete</button></td>
+      </tr>`).join('');
+    }
+
+    // ===== COURSES =====
+    let allCourses = [];
+    let courseYear = 'all', courseDept = 'all';
+
+    async function loadCourses() {
+      try {
+        const data = await apiRequest('/admin/courses');
+        allCourses = data.courses;
+        courseYear = 'all'; courseDept = 'all';
+        renderCoursesByYear();
+      } catch (e) { console.error(e); }
+    }
+
+    function filterCoursesByYear(level, btn) {
+      document.querySelectorAll('#courseYearTabs .year-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      courseYear = level; courseDept = 'all';
+      renderCoursesByYear();
+    }
+
+    function renderCoursesByYear() {
+      const yearScoped = courseYear === 'all' ? allCourses : allCourses.filter(c => c.level === courseYear);
+      buildDeptTabs('courseDeptTabs', yearScoped, (dept) => { courseDept = dept; renderCoursesTable(); });
+      renderCoursesTable();
+    }
+
+    function renderCoursesTable() {
+      const container = document.getElementById('coursesByYear');
+      if (!allCourses.length) { container.innerHTML = '<div class="card"><div class="card-body text-center" style="color:var(--text-light)">No courses found</div></div>'; return; }
+
+      const levels = courseYear === 'all' ? ['100','200','300','400','500'] : [courseYear];
+      let html = '';
+      levels.forEach(lvl => {
+        let courses = allCourses.filter(c => c.level === lvl);
+        if (courseDept !== 'all') courses = courses.filter(c => c.department === courseDept);
+        if (!courses.length) return;
+        html += `<div class="card mt-2">
+          <div class="card-header"><h3>${levelLabels[lvl] || lvl} <span style="color:var(--text-light);font-weight:400;font-size:13px">(Level ${lvl})</span></h3></div>
+          <div class="card-body table-responsive">
+            <table><thead><tr>
+              <th>Code</th><th>Title</th><th>Department</th><th>Teacher</th><th>Students</th><th>Actions</th>
+            </tr></thead><tbody>
+              ${courses.map(c => `<tr>
+                <td><strong>${c.courseCode}</strong></td><td>${c.courseTitle}</td><td>${c.department}</td>
+                <td>${c.teacher ? c.teacher.fullName : '-'}</td><td>${c.students.length}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteCourse('${c._id}')">Delete</button></td>
+              </tr>`).join('')}
+            </tbody></table>
+          </div>
+        </div>`;
+      });
+
+      container.innerHTML = html || '<div class="card"><div class="card-body text-center" style="color:var(--text-light)">No courses found for this filter.</div></div>';
+    }
+
+    // ===== EXAMS =====
+    let allExams = [];
+    let examYear = 'all', examDept = 'all';
+
+    async function loadExams() {
+      try {
+        const data = await apiRequest('/admin/exams');
+        allExams = data.exams;
+        examYear = 'all'; examDept = 'all';
+        renderExamsByYear();
+      } catch (e) { console.error(e); }
+    }
+
+    function filterExamsByYear(level, btn) {
+      document.querySelectorAll('#examYearTabs .year-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      examYear = level; examDept = 'all';
+      renderExamsByYear();
+    }
+
+    function renderExamsByYear() {
+      const yearScoped = (examYear === 'all' ? allExams : allExams.filter(e => e.course && e.course.level === examYear))
+        .map(e => ({ department: e.course ? e.course.department : null }));
+      buildDeptTabs('examDeptTabs', yearScoped, (dept) => { examDept = dept; renderExamsTable(); });
+      renderExamsTable();
+    }
+
+    function renderExamsTable() {
+      const container = document.getElementById('examsByYear');
+      if (!allExams.length) { container.innerHTML = '<div class="card"><div class="card-body text-center" style="color:var(--text-light)">No exams found</div></div>'; return; }
+
+      const levels = examYear === 'all' ? ['100','200','300','400','500'] : [examYear];
+      let html = '';
+      levels.forEach(lvl => {
+        let exams = allExams.filter(e => e.course && e.course.level === lvl);
+        if (examDept !== 'all') exams = exams.filter(e => e.course && e.course.department === examDept);
+        if (!exams.length) return;
+        html += `<div class="card mt-2">
+          <div class="card-header"><h3>${levelLabels[lvl] || lvl} <span style="color:var(--text-light);font-weight:400;font-size:13px">(Level ${lvl})</span></h3></div>
+          <div class="card-body table-responsive">
+            <table><thead><tr>
+              <th>Course</th><th>Date</th><th>Time</th><th>Venue</th><th>Invigilator</th><th>Students</th><th>Status</th><th>Actions</th>
+            </tr></thead><tbody>
+              ${exams.map(e => `<tr>
+                <td><strong>${e.course ? e.course.courseCode : '-'}</strong><br><small>${e.course ? e.course.courseTitle : ''}</small></td>
+                <td>${formatDate(e.examDate)}</td><td>${formatTime(e.startTime)} - ${formatTime(e.endTime)}</td>
+                <td>${e.venue}</td><td>${e.invigilator ? e.invigilator.fullName : '-'}</td>
+                <td>${e.registeredStudents.length}</td><td>${statusBadge(e.status)}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteExam('${e._id}')">Delete</button></td>
+              </tr>`).join('')}
+            </tbody></table>
+          </div>
+        </div>`;
+      });
+
+      // Exams whose course has no level (shouldn't normally happen) fall outside the year groups above
+      container.innerHTML = html || '<div class="card"><div class="card-body text-center" style="color:var(--text-light)">No exams found for this filter.</div></div>';
+    }
+
+    // ===== REPORTS =====
+    async function loadExamOptions() {
+      try {
+        const data = await apiRequest('/admin/exams');
+        const select = document.getElementById('reportExamSelect');
+        select.innerHTML = '<option value="">-- Select Exam --</option>' +
+          data.exams.map(e => `<option value="${e._id}">${e.course ? e.course.courseCode + ' - ' + e.course.courseTitle : 'Unknown'} (${formatDate(e.examDate)})</option>`).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadReport(examId) {
+      if (!examId) { document.getElementById('reportContent').innerHTML = ''; return; }
+      try {
+        const data = await apiRequest(`/admin/reports/exam/${examId}`);
+        const s = data.summary;
+        let html = `
+          <div class="stats-grid mt-2">
+            <div class="stat-card blue"><div class="stat-icon">&#128203;</div><div><div class="stat-number">${s.totalRegistered}</div><div class="stat-label">Registered</div></div></div>
+            <div class="stat-card green"><div class="stat-icon">&#9989;</div><div><div class="stat-number">${s.totalPresent}</div><div class="stat-label">Present</div></div></div>
+            <div class="stat-card red"><div class="stat-icon">&#10060;</div><div><div class="stat-number">${s.totalAbsent}</div><div class="stat-label">Absent</div></div></div>
+            <div class="stat-card yellow"><div class="stat-icon">&#128202;</div><div><div class="stat-number">${s.attendanceRate}%</div><div class="stat-label">Attendance Rate</div></div></div>
+          </div>`;
+        if (data.attendanceRecords.length) {
+          html += `<div class="table-responsive mt-2"><table><thead><tr><th>Student</th><th>Matric No.</th><th>Status</th><th>Method</th><th>Check-in Time</th></tr></thead><tbody>`;
+          html += data.attendanceRecords.map(r => `<tr>
+            <td>${r.student ? r.student.fullName : '-'}</td>
+            <td>${r.student ? r.student.matricNumber : '-'}</td>
+            <td>${statusBadge(r.status)}</td>
+            <td>${r.verificationMethod}</td>
+            <td>${formatDateTime(r.checkInTime)}</td>
+          </tr>`).join('');
+          html += '</tbody></table></div>';
+        } else { html += '<p class="text-center mt-2" style="color:var(--text-light)">No attendance records yet.</p>'; }
+        document.getElementById('reportContent').innerHTML = html;
+      } catch (e) { console.error(e); }
+    }
+
+    // ===== FORM HANDLERS =====
+    function prepareUserForm(role) {
+      document.getElementById('userRole').value = role;
+      document.getElementById('userModalTitle').textContent = `Add ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+      document.getElementById('matricField').style.display = role === 'student' ? 'block' : 'none';
+      document.getElementById('staffIdField').style.display = role === 'teacher' ? 'block' : 'none';
+      document.getElementById('levelField').style.display = role === 'student' ? 'block' : 'none';
+      document.getElementById('userForm').reset();
+      document.getElementById('userId').value = '';
+    }
+
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const role = document.getElementById('userRole').value;
+      const body = {
+        fullName: document.getElementById('userFullName').value,
+        email: document.getElementById('userEmail').value,
+        password: document.getElementById('userPassword').value || 'password123',
+        role,
+        department: document.getElementById('userDept').value,
+        phone: document.getElementById('userPhone').value
+      };
+      if (role === 'student') { body.matricNumber = document.getElementById('userMatric').value; body.level = document.getElementById('userLevel').value; }
+      if (role === 'teacher') { body.staffId = document.getElementById('userStaffId').value; }
+
+      try {
+        await apiRequest('/admin/users', 'POST', body);
+        closeModal('userModal');
+        showAlert('alert', `${role} added successfully!`, 'success');
+        if (role === 'student') loadStudents(); else loadTeachers();
+        loadDashboard();
+      } catch (err) { showAlert('alert', err.message); }
+    });
+
+    document.getElementById('courseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        courseCode: document.getElementById('courseCode').value,
+        courseTitle: document.getElementById('courseTitle').value,
+        department: document.getElementById('courseDept').value,
+        level: document.getElementById('courseLevel').value,
+        teacher: document.getElementById('courseTeacher').value || undefined,
+        creditUnits: parseInt(document.getElementById('courseCreditUnits').value)
+      };
+      try {
+        await apiRequest('/admin/courses', 'POST', body);
+        closeModal('courseModal');
+        showAlert('alert', 'Course created!', 'success');
+        loadCourses(); loadDashboard();
+      } catch (err) { showAlert('alert', err.message); }
+    });
+
+    async function openExamModal() {
+      try {
+        const courses = await apiRequest('/admin/courses');
+        const teachers = await apiRequest('/admin/users?role=teacher');
+        document.getElementById('examCourse').innerHTML = '<option value="">-- Select --</option>' +
+          courses.courses.map(c => `<option value="${c._id}">${c.courseCode} - ${c.courseTitle}</option>`).join('');
+        document.getElementById('examInvigilator').innerHTML = '<option value="">-- Select --</option>' +
+          teachers.users.map(t => `<option value="${t._id}">${t.fullName}</option>`).join('');
+        openModal('examModal');
+      } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('examForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        course: document.getElementById('examCourse').value,
+        examDate: document.getElementById('examDate').value,
+        startTime: document.getElementById('examStart').value,
+        endTime: document.getElementById('examEnd').value,
+        venue: document.getElementById('examVenue').value,
+        invigilator: document.getElementById('examInvigilator').value || undefined,
+        semester: document.getElementById('examSemester').value,
+        academicYear: document.getElementById('examYear').value
+      };
+      try {
+        await apiRequest('/admin/exams', 'POST', body);
+        closeModal('examModal');
+        showAlert('alert', 'Exam scheduled!', 'success');
+        loadExams(); loadDashboard();
+      } catch (err) { showAlert('alert', err.message); }
+    });
+
+    // ===== DELETE HANDLERS =====
+    async function deleteUser(id, role) {
+      if (!confirm(`Are you sure you want to delete this ${role}?`)) return;
+      try {
+        await apiRequest(`/admin/users/${id}`, 'DELETE');
+        showAlert('alert', `${role} deleted.`, 'success');
+        if (role === 'student') loadStudents(); else loadTeachers();
+        loadDashboard();
+      } catch (e) { showAlert('alert', e.message); }
+    }
+
+    async function deleteCourse(id) {
+      if (!confirm('Delete this course?')) return;
+      try { await apiRequest(`/admin/courses/${id}`, 'DELETE'); loadCourses(); loadDashboard(); } catch (e) { showAlert('alert', e.message); }
+    }
+
+    async function deleteExam(id) {
+      if (!confirm('Delete this exam and its attendance records?')) return;
+      try { await apiRequest(`/admin/exams/${id}`, 'DELETE'); loadExams(); loadDashboard(); } catch (e) { showAlert('alert', e.message); }
+    }
+
+    // Load teacher options for course modal
+    async function loadTeacherOptions() {
+      try {
+        const data = await apiRequest('/admin/users?role=teacher');
+        document.getElementById('courseTeacher').innerHTML = '<option value="">-- Select --</option>' +
+          data.users.map(t => `<option value="${t._id}">${t.fullName}</option>`).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    // Initialize
+    loadDashboard();
+    loadTeacherOptions();
+    loadDepartmentList();
+  </script>
+</body>
+</html>

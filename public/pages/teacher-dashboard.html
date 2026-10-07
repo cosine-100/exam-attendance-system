@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard - Exam Attendance System</title>
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-row">
+          <img src="/img/logo-icon.png" alt="EAS Logo">
+          <h2>Exam Attendance</h2>
+        </div>
+        <p class="user-role">Teacher Panel</p>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" onclick="showSection('dashboard')"><span class="nav-icon">&#128202;</span> Dashboard</a></li>
+        <li><a href="#" onclick="showSection('exams')"><span class="nav-icon">&#128221;</span> My Exams</a></li>
+        <li><a href="#" onclick="showSection('scanner')"><span class="nav-icon">&#128247;</span> Scan Attendance</a></li>
+        <li><a href="#" onclick="showSection('attendance')"><span class="nav-icon">&#128203;</span> Attendance Records</a></li>
+        <li><a href="#" onclick="logout()"><span class="nav-icon">&#128682;</span> Sign Out</a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <div id="alert" class="alert"></div>
+
+      <!-- Dashboard -->
+      <section id="sec-dashboard">
+        <div class="page-header">
+          <h1>Teacher Dashboard</h1>
+          <span id="welcome-text" style="font-size:14px;color:var(--text-light);"></span>
+        </div>
+        <div class="stats-grid" id="statsGrid"><div class="spinner"></div></div>
+      </section>
+
+      <!-- My Exams -->
+      <section id="sec-exams" class="hidden">
+        <div class="page-header"><h1>My Exams</h1></div>
+        <div class="card">
+          <div class="card-body table-responsive">
+            <table><thead><tr>
+              <th>Course</th><th>Date</th><th>Time</th><th>Venue</th><th>Students</th><th>Status</th><th>Attendance</th><th>Actions</th>
+            </tr></thead><tbody id="examsTable"><tr><td colspan="8"><div class="spinner"></div></td></tr></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- QR Scanner -->
+      <section id="sec-scanner" class="hidden">
+        <div class="page-header"><h1>Scan Attendance</h1></div>
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label>Select Exam</label>
+              <select id="scanExamSelect" onchange="selectExamForScan(this.value)" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;">
+                <option value="">-- Select Exam --</option>
+              </select>
+            </div>
+            <div id="scanArea" class="hidden">
+              <div class="scanner-area">
+                <p class="mb-2" style="font-size:14px;color:var(--text-light);">Paste or enter the student's QR code data below:</p>
+                <div class="form-group">
+                  <textarea id="qrInput" rows="4" placeholder="Paste QR code data here..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;font-family:monospace;"></textarea>
+                </div>
+                <button class="btn btn-success" onclick="verifyQR()" style="width:100%;">&#10003; Verify & Record Attendance</button>
+                <div id="scanResult" class="scan-result mt-2"></div>
+              </div>
+              <div class="mt-3">
+                <h3 style="font-size:16px;margin-bottom:12px;">Or mark manually:</h3>
+                <div class="form-group">
+                  <select id="manualStudentSelect" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;">
+                    <option value="">-- Select Student --</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="markManual()">Mark Present (Manual)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mt-2" id="liveFeedCard" style="display:none;">
+          <div class="card-header"><h3>Live Attendance Feed</h3><span id="liveCount" class="badge badge-success">0</span></div>
+          <div class="card-body table-responsive">
+            <table><thead><tr><th>Student</th><th>Matric No.</th><th>Method</th><th>Time</th></tr></thead>
+            <tbody id="liveFeed"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Attendance Records -->
+      <section id="sec-attendance" class="hidden">
+        <div class="page-header"><h1>Attendance Records</h1></div>
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <select id="attendanceExamSelect" onchange="loadAttendanceRecords(this.value)" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;">
+                <option value="">-- Select Exam --</option>
+              </select>
+            </div>
+            <div id="attendanceContent"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    if (!requireAuth('teacher')) throw new Error('Unauthorized');
+    const user = getUser();
+    document.getElementById('welcome-text').textContent = `Welcome, ${user.fullName}`;
+
+    let currentScanExamId = null;
+
+    function showSection(section) {
+      document.querySelectorAll('[id^="sec-"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`sec-${section}`).classList.remove('hidden');
+      document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+      event.target.closest('a').classList.add('active');
+      if (section === 'exams') loadExams();
+      if (section === 'scanner') loadScanOptions();
+      if (section === 'attendance') loadAttendanceOptions();
+      document.querySelector('.sidebar').classList.remove('open');
+    }
+
+    async function loadDashboard() {
+      try {
+        const data = await apiRequest('/teacher/dashboard');
+        document.getElementById('statsGrid').innerHTML = `
+          <div class="stat-card blue"><div class="stat-icon">&#128218;</div><div><div class="stat-number">${data.totalCourses}</div><div class="stat-label">My Courses</div></div></div>
+          <div class="stat-card"><div class="stat-icon">&#128221;</div><div><div class="stat-number">${data.totalExams}</div><div class="stat-label">Total Exams</div></div></div>
+          <div class="stat-card green"><div class="stat-icon">&#127891;</div><div><div class="stat-number">${data.totalStudents}</div><div class="stat-label">Total Students</div></div></div>
+          <div class="stat-card yellow"><div class="stat-icon">&#128197;</div><div><div class="stat-number">${data.upcomingExams}</div><div class="stat-label">Upcoming Exams</div></div></div>
+        `;
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadExams() {
+      try {
+        const data = await apiRequest('/teacher/exams');
+        const tbody = document.getElementById('examsTable');
+        if (!data.exams.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center">No exams assigned</td></tr>'; return; }
+        tbody.innerHTML = data.exams.map(e => `<tr>
+          <td><strong>${e.course ? e.course.courseCode : '-'}</strong><br><small>${e.course ? e.course.courseTitle : ''}</small></td>
+          <td>${formatDate(e.examDate)}</td><td>${formatTime(e.startTime)} - ${formatTime(e.endTime)}</td>
+          <td>${e.venue}</td><td>${e.registeredStudents.length}</td>
+          <td>${statusBadge(e.status)}</td>
+          <td>${e.isAttendanceOpen ? '<span class="badge badge-success">Open</span>' : '<span class="badge badge-secondary">Closed</span>'}</td>
+          <td><button class="btn btn-sm ${e.isAttendanceOpen ? 'btn-warning' : 'btn-success'}" onclick="toggleAttendance('${e._id}')">${e.isAttendanceOpen ? 'Close' : 'Open'}</button></td>
+        </tr>`).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    async function toggleAttendance(examId) {
+      try {
+        const data = await apiRequest(`/attendance/toggle/${examId}`, 'PUT');
+        showAlert('alert', data.message, 'success');
+        loadExams();
+      } catch (e) { showAlert('alert', e.message); }
+    }
+
+    async function loadScanOptions() {
+      try {
+        const data = await apiRequest('/teacher/exams');
+        const select = document.getElementById('scanExamSelect');
+        select.innerHTML = '<option value="">-- Select Exam --</option>' +
+          data.exams.filter(e => e.isAttendanceOpen).map(e =>
+            `<option value="${e._id}">${e.course ? e.course.courseCode + ' - ' + e.course.courseTitle : 'Unknown'} (${formatDate(e.examDate)})</option>`
+          ).join('');
+        if (!data.exams.filter(e => e.isAttendanceOpen).length) {
+          select.innerHTML += '<option disabled>No exams with open attendance</option>';
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    async function selectExamForScan(examId) {
+      if (!examId) { document.getElementById('scanArea').classList.add('hidden'); return; }
+      currentScanExamId = examId;
+      document.getElementById('scanArea').classList.remove('hidden');
+      document.getElementById('liveFeedCard').style.display = 'block';
+      // Load students for manual marking
+      try {
+        const data = await apiRequest(`/teacher/exams/${examId}/students`);
+        const select = document.getElementById('manualStudentSelect');
+        select.innerHTML = '<option value="">-- Select Student --</option>' +
+          data.students.filter(s => !s.checkedIn).map(s =>
+            `<option value="${s._id}">${s.fullName} (${s.matricNumber})</option>`
+          ).join('');
+        loadLiveFeed(examId);
+      } catch (e) { console.error(e); }
+    }
+
+    async function verifyQR() {
+      const qrData = document.getElementById('qrInput').value.trim();
+      if (!qrData || !currentScanExamId) return;
+      const resultDiv = document.getElementById('scanResult');
+      try {
+        const data = await apiRequest('/attendance/verify', 'POST', { qrData, examId: currentScanExamId });
+        resultDiv.className = 'scan-result success';
+        resultDiv.innerHTML = `<strong>&#10003; ${data.message}</strong><br>${data.student.fullName} (${data.student.matricNumber})`;
+        document.getElementById('qrInput').value = '';
+        loadLiveFeed(currentScanExamId);
+        selectExamForScan(currentScanExamId);
+      } catch (e) {
+        resultDiv.className = 'scan-result error';
+        resultDiv.innerHTML = `<strong>&#10007; ${e.message}</strong>`;
+      }
+    }
+
+    async function markManual() {
+      const studentId = document.getElementById('manualStudentSelect').value;
+      if (!studentId || !currentScanExamId) { showAlert('alert', 'Select a student first.'); return; }
+      try {
+        const data = await apiRequest('/attendance/manual', 'POST', { examId: currentScanExamId, studentId });
+        showAlert('alert', data.message, 'success');
+        loadLiveFeed(currentScanExamId);
+        selectExamForScan(currentScanExamId);
+      } catch (e) { showAlert('alert', e.message); }
+    }
+
+    async function loadLiveFeed(examId) {
+      try {
+        const data = await apiRequest(`/attendance/exam/${examId}`);
+        document.getElementById('liveCount').textContent = `${data.summary.present} / ${data.summary.totalRegistered}`;
+        const tbody = document.getElementById('liveFeed');
+        tbody.innerHTML = data.records.map(r => `<tr>
+          <td>${r.student ? r.student.fullName : '-'}</td>
+          <td>${r.student ? r.student.matricNumber : '-'}</td>
+          <td><span class="badge badge-${r.verificationMethod === 'qr_code' ? 'info' : 'warning'}">${r.verificationMethod}</span></td>
+          <td>${formatDateTime(r.checkInTime)}</td>
+        </tr>`).join('') || '<tr><td colspan="4" class="text-center">No check-ins yet</td></tr>';
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadAttendanceOptions() {
+      try {
+        const data = await apiRequest('/teacher/exams');
+        const select = document.getElementById('attendanceExamSelect');
+        select.innerHTML = '<option value="">-- Select Exam --</option>' +
+          data.exams.map(e => `<option value="${e._id}">${e.course ? e.course.courseCode + ' - ' + e.course.courseTitle : 'Unknown'} (${formatDate(e.examDate)})</option>`).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadAttendanceRecords(examId) {
+      if (!examId) { document.getElementById('attendanceContent').innerHTML = ''; return; }
+      try {
+        const data = await apiRequest(`/attendance/exam/${examId}`);
+        const s = data.summary;
+        let html = `<div class="stats-grid mt-2">
+          <div class="stat-card blue"><div class="stat-icon">&#128203;</div><div><div class="stat-number">${s.totalRegistered}</div><div class="stat-label">Registered</div></div></div>
+          <div class="stat-card green"><div class="stat-icon">&#9989;</div><div><div class="stat-number">${s.present}</div><div class="stat-label">Present</div></div></div>
+          <div class="stat-card red"><div class="stat-icon">&#10060;</div><div><div class="stat-number">${s.absent}</div><div class="stat-label">Absent</div></div></div>
+          <div class="stat-card yellow"><div class="stat-icon">&#128202;</div><div><div class="stat-number">${s.attendanceRate}%</div><div class="stat-label">Rate</div></div></div>
+        </div>`;
+        if (data.records.length) {
+          html += `<div class="table-responsive mt-2"><table><thead><tr><th>Student</th><th>Matric</th><th>Status</th><th>Method</th><th>Time</th></tr></thead><tbody>`;
+          html += data.records.map(r => `<tr><td>${r.student?.fullName||'-'}</td><td>${r.student?.matricNumber||'-'}</td><td>${statusBadge(r.status)}</td><td>${r.verificationMethod}</td><td>${formatDateTime(r.checkInTime)}</td></tr>`).join('');
+          html += '</tbody></table></div>';
+        }
+        document.getElementById('attendanceContent').innerHTML = html;
+      } catch (e) { console.error(e); }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

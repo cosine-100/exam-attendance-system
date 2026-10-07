@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Exam Attendance System</title>
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-shell">
+      <div class="login-brand">
+        <div class="brand-content">
+          <div class="brand-logo"><img src="/img/logo-icon.png" alt="EAS Logo" style="width:28px;vertical-align:middle;margin-right:6px;"> Exam Attendance</div>
+          <h2>Verify attendance with confidence.</h2>
+          <p>QR-based check-ins, live tracking, and clean reports — built for exam halls that can't afford mistakes.</p>
+          <ul class="brand-features">
+            <li>&#9989; Instant QR verification</li>
+            <li>&#9989; Real-time attendance feed</li>
+            <li>&#9989; Reports by course & year</li>
+          </ul>
+        </div>
+        <img src="/img/exam-illustration.svg" alt="Exam attendance illustration" class="brand-illustration">
+      </div>
+
+      <div class="login-card">
+        <img src="/img/logo-medium.png" alt="EAS Logo" class="logo-icon">
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Sign in to manage exams and attendance</p>
+
+        <div id="alert" class="alert"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+        </form>
+
+        <div class="mt-3 text-center demo-logins">
+          <p><strong>Demo Logins</strong></p>
+          <p>Admin: admin@exam.com / admin123</p>
+          <p>Teacher: james@exam.com / teacher123</p>
+          <p>Student: john@exam.com / student123</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    // Redirect if already logged in
+    const user = getUser();
+    if (user && getToken()) {
+      window.location.href = `/${user.role === 'admin' ? 'admin' : user.role}`;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      btn.textContent = 'Signing in...';
+      btn.disabled = true;
+
+      try {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const data = await apiRequest('/auth/login', 'POST', { email, password });
+
+        setAuth(data.token, data.user);
+
+        // Redirect based on role
+        const redirectMap = { admin: '/admin', teacher: '/teacher', student: '/student' };
+        window.location.href = redirectMap[data.user.role] || '/';
+      } catch (error) {
+        showAlert('alert', error.message);
+      } finally {
+        btn.textContent = 'Sign In';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
